@@ -4,49 +4,57 @@
 #include <sys/wait.h>
 #include <string.h>
 
-void execute_command(char *command) {
-    char *args[100];
-    int i = 0;
-
-    // Split the command into program and arguments
-    args[i] = strtok(command, " ");
-    while (args[i] != NULL) {
-        i++;
-        args[i] = strtok(NULL, " ");
-    }
-
-    // Create a child process
-    pid_t pid = fork();
-
-    if (pid < 0) {
-        perror("fork failed");
-        exit(EXIT_FAILURE);
-    }
-
-    if (pid == 0) {
-        // Child process executes the command
-        execvp(args[0], args);
-        perror("execvp failed");
-        exit(EXIT_FAILURE);
-    } else {
-        // Parent process waits for the child to finish
-        wait(NULL);
-    }
+void execute_command(char *command[]) {
+    execve(command[0], command, NULL);
 }
 
 int main(int argc, char *argv[]) {
+
+    char **command = NULL;  // Initialize command array to NULL
+    int num_elements = 0;   // Number of elements currently in command array
+    command = (char **)malloc((num_elements + 1) * sizeof(char *));
+    
     if (argc < 2) {
         fprintf(stderr, "Usage: %s command1 + command2 + ... + commandN\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+    // /bin/echo Linux is cool + /bin/echo But I am sleepy
+    for (int i = 1; i <= argc ; i++) {
+        if (argc == i || strcmp(argv[i], "+") == 0){
+            command[num_elements] = NULL;
+            pid_t pid = fork();
+            if (pid == -1) {
+                perror("fork");
+                exit(EXIT_FAILURE);
+            } else if (pid == 0) {
+                // Child process
+                execute_command(command);
+            } else {
+                // Parent process
+                int status;
+                waitpid(pid, &status, 0);  // Wait for child process to finish
+            }
 
-    for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "+") == 0) {
-            continue;
-        } else {
-            execute_command(argv[i]);
+
+            // Free dynamically allocated memory
+            for (int i = 0; command[i] != NULL; i++) {
+                free(command[i]);
+            }
+            free(command);
+            // Reset for the next command sequence
+            num_elements = 0; 
+            command = (char **)malloc((num_elements + 1) * sizeof(char *));
+        }else{
+            command[num_elements] = strdup(argv[i]);
+            num_elements++;
+            // Resize command array
+            command = (char **)realloc(command, (num_elements + 1) * sizeof(char *));
         }
     }
+
+
+    
+
 
     return 0;
 }

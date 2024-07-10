@@ -19,9 +19,10 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     // /bin/echo Linux is cool + /bin/echo But I am sleepy
-    for (int i = 1; i <= argc ; i++) {
+    for (int i = 1; i < argc + 1; i++) {
         if (argc == i || strcmp(argv[i], "+") == 0){
             command[num_elements] = NULL;
+
             pid_t pid = fork();
             if (pid == -1) {
                 perror("fork");
@@ -41,9 +42,7 @@ int main(int argc, char *argv[]) {
                 free(command[i]);
             }
             free(command);
-            // Reset for the next command sequence
             num_elements = 0; 
-            command = (char **)malloc((num_elements + 1) * sizeof(char *));
         }else{
             command[num_elements] = strdup(argv[i]);
             num_elements++;
@@ -51,10 +50,5 @@ int main(int argc, char *argv[]) {
             command = (char **)realloc(command, (num_elements + 1) * sizeof(char *));
         }
     }
-
-
-    
-
-
     return 0;
 }

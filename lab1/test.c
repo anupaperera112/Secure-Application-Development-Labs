@@ -38,26 +38,22 @@ int main(int argc, char *argv[]) {
         // Allocate memory for the token and copy it
         if (command[num_command] == NULL) {
             command[num_command] = (char *)malloc(strlen(token) + 1);
-        }else{
-            command[num_command] = (char *)realloc(command[num_command],num_elements * strlen(token) + 1);
         }
-        command[num_command][num_elements] = strcpy(token);
+        strcpy(command[num_command], token);
+        command[num_command] = (char *)realloc(command[num_command],num_elements * strlen(token) + 1);
+        // command[num_command][num_elements] = strdup(token);
         num_elements++;
         token = strtok(NULL, " ");  // Get the next token
     }
-    command[num_command][num_elements] = NULL;
+    command[num_command][num_elements] = '\0';
 
 
-       // Print each string in command
-    printf("Elements in command:\n");
-    for (int i = 0; command[num_command][i] != NULL; i++) {
-        printf("%s\n", command[num_command][i]);
-    }
-    
+
     // Free allocated memory
-    for (int i = 0; command[i] != NULL; i++) {
-        free(command[i]);
-    }
+    // for (int i = 0; command[i] != NULL; i++) {
+    //     free(command[i]);
+    // }
+    free(command[num_command]);
     free(command);
     
 

@@ -4,51 +4,63 @@
 #include <sys/wait.h>
 #include <string.h>
 
+
+
 void execute_command(char *command[]) {
-    execve(command[0], command, NULL);
+    pid_t pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    } else if (pid == 0) {
+        // Child process
+        execve(command[0], command, NULL);
+    } else {
+        // Parent process
+        int status;
+        waitpid(pid, &status, 0);  // Wait for child process to finish
+    }
+    
 }
 
 int main(int argc, char *argv[]) {
 
     char **command = NULL;  // Initialize command array to NULL
+    char line[100];
     int num_elements = 0;   // Number of elements currently in command array
-    command = (char **)malloc((num_elements + 1) * sizeof(char *));
+    int num_command = 0;
+    command = (char **)malloc((num_command + 1) * sizeof(char *));
     
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s command1 + command2 + ... + commandN\n", argv[0]);
-        exit(EXIT_FAILURE);
-    }
-    // /bin/echo Linux is cool + /bin/echo But I am sleepy
-    for (int i = 1; i < argc + 1; i++) {
-        if (argc == i || strcmp(argv[i], "+") == 0){
-            command[num_elements] = NULL;
+    fgets(line, sizeof(line), stdin);
 
-            pid_t pid = fork();
-            if (pid == -1) {
-                perror("fork");
-                exit(EXIT_FAILURE);
-            } else if (pid == 0) {
-                // Child process
-                execute_command(command);
-            } else {
-                // Parent process
-                int status;
-                waitpid(pid, &status, 0);  // Wait for child process to finish
-            }
-
-
-            // Free dynamically allocated memory
-            for (int i = 0; command[i] != NULL; i++) {
-                free(command[i]);
-            }
-            free(command);
-            num_elements = 0; 
+    // Splitting the command based on spaces
+    char *token = strtok(line, " ");
+    while (token != NULL) {
+        // Allocate memory for the token and copy it
+        if (command[num_command] == NULL) {
+            command[num_command] = (char *)malloc(strlen(token) + 1);
         }else{
-            command[num_elements] = strdup(argv[i]);
-            num_elements++;
-            // Resize command array
-            command = (char **)realloc(command, (num_elements + 1) * sizeof(char *));
+            command[num_command] = (char *)realloc(command[num_command],num_elements * strlen(token) + 1);
         }
+        command[num_command][num_elements] = strcpy(token);
+        num_elements++;
+        token = strtok(NULL, " ");  // Get the next token
     }
+    command[num_command][num_elements] = NULL;
+
+
+       // Print each string in command
+    printf("Elements in command:\n");
+    for (int i = 0; command[num_command][i] != NULL; i++) {
+        printf("%s\n", command[num_command][i]);
+    }
+    
+    // Free allocated memory
+    for (int i = 0; command[i] != NULL; i++) {
+        free(command[i]);
+    }
+    free(command);
+    
+
+
     return 0;
 }

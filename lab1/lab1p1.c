@@ -5,7 +5,19 @@
 #include <string.h>
 
 void execute_command(char *command[]) {
-    execve(command[0], command, NULL);
+    pid_t pid = fork();
+    if (pid == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    } else if (pid == 0) {
+        // Child process
+        execve(command[0], command, NULL);
+    } else {
+        // Parent process
+        int status;
+        waitpid(pid, &status, 0);  // Wait for child process to finish
+    }
+    
 }
 
 int main(int argc, char *argv[]) {
@@ -18,23 +30,13 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Usage: %s command1 + command2 + ... + commandN\n", argv[0]);
         exit(EXIT_FAILURE);
     }
+    
     // /bin/echo Linux is cool + /bin/echo But I am sleepy
     for (int i = 1; i <= argc ; i++) {
         if (argc == i || strcmp(argv[i], "+") == 0){
             command[num_elements] = NULL;
-            pid_t pid = fork();
-            if (pid == -1) {
-                perror("fork");
-                exit(EXIT_FAILURE);
-            } else if (pid == 0) {
-                // Child process
-                execute_command(command);
-            } else {
-                // Parent process
-                int status;
-                waitpid(pid, &status, 0);  // Wait for child process to finish
-            }
 
+             execute_command(command);
 
             // Free dynamically allocated memory
             for (int i = 0; command[i] != NULL; i++) {

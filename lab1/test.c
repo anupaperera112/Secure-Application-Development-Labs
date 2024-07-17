@@ -4,9 +4,6 @@
 #include <sys/wait.h>
 #include <string.h>
 
-#define MAX_ARGS 8
-#define MAX_LINE_LENGTH 128
-
 void execute_command(char *command[]) {
     pid_t pid = fork();
     if (pid == -1) {
@@ -25,29 +22,41 @@ void execute_command(char *command[]) {
 
 int main(int argc, char *argv[]) {
 
-    char *command = NULL;  // Initialize command array to NULL
-    char line[MAX_LINE_LENGTH];
+    char **command = NULL;  // Initialize command array to NULL
     int num_elements = 0;   // Number of elements currently in command array
-    command = (int *)malloc((num_elements + 1) * sizeof(int *));
-
+    command = (char **)malloc((num_elements + 1) * sizeof(char *));
+    
     if (argc < 2) {
-        
-        exit(1);
-    }
-
-    while (fgets(line, sizeof(line), stdin) != NULL){
-        command[num_elements] = strdup(argv[1]);
-        char *token = strtok(line, " ");
-        while (token != NULL) {
-            num_elements++;
-            command = (int *)realloc(command, (num_elements + 1) * sizeof(int *));
-            command[num_elements] = strdup(token);
-            token = strtok(NULL, " ");  // Get the next token
-        }
-        command[num_elements] = NULL;
-        execute_command(*command);
-        num_elements = 0;
+        fprintf(stderr, "Usage: %s command1 + command2 + ... + commandN\n", argv[0]);
+        exit(EXIT_FAILURE);
     }
     
+    // /bin/echo Linux is cool + /bin/echo But I am sleepy
+    for (int i = 1; i <= argc ; i++) {
+        if (argc == i || strcmp(argv[i], "+") == 0){
+            command[num_elements] = NULL;
+
+             execute_command(command);
+
+            // Free dynamically allocated memory
+            for (int i = 0; command[i] != NULL; i++) {
+                free(command[i]);
+            }
+            free(command);
+            // Reset for the next command sequence
+            num_elements = 0; 
+            command = (char **)malloc((num_elements + 1) * sizeof(char *));
+        }else{
+            command[num_elements] = strdup(argv[i]);
+            num_elements++;
+            // Resize command array
+            command = (char **)realloc(command, (num_elements + 1) * sizeof(char *));
+        }
+    }
+
+
+    
+
+
     return 0;
 }

@@ -86,10 +86,6 @@ int main(int argc, char *argv[]) {
 
         for (i = 0; i < argc - 1; i++)
         {
-            if (strcmp(argv[i + 1], "%") == 0)
-            {
-                placeholder_count++;
-            }
             args[i] = strdup(argv[i + 1]);
         }
         args[i] = NULL;

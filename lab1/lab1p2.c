@@ -24,30 +24,76 @@ void execute_command(char *command[]) {
 }
 
 int main(int argc, char *argv[]) {
+    char *args[MAX_ARGS + 1];
+    char input_line[MAX_LINE_LENGTH];
+    int placeholder_count = 0;
+    int i;   
 
-    char *command = NULL;  // Initialize command array to NULL
-    char line[MAX_LINE_LENGTH];
-    int num_elements = 0;   // Number of elements currently in command array
-    command = (int *)malloc((num_elements + 1) * sizeof(int *));
-
-    if (argc < 2) {
-        fprintf(stderr, "Usage: %s <command>\n", argv[0]);
-        exit(1);
-    }
-
-    while (fgets(line, sizeof(line), stdin) != NULL){
-        command[num_elements] = strdup(argv[1]);
-        char *token = strtok(line, " ");
-        while (token != NULL) {
-            num_elements++;
-            command = (int *)realloc(command, (num_elements + 1) * sizeof(int *));
-            command[num_elements] = strdup(token);
-            token = strtok(NULL, " ");  // Get the next token
+    for (i = 0; i < argc - 1; i++)
+    {
+        if (strcmp(argv[i + 1], "%") == 0)
+        {
+            placeholder_count++;
         }
-        command[num_elements] = NULL;
-        execute_command(*command);
-        num_elements = 0;
+        args[i] = strdup(argv[i + 1]);
     }
-    
+    args[i] = NULL;
+
+    if(placeholder_count == 0)
+    {
+        fprintf(stderr, "Usage: %s <command>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
+
+    if(placeholder_count>MAX_ARGS)
+    {
+        fprintf(stderr, "maximum number of input words is 8\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (fgets(input_line, sizeof(input_line), stdin) != NULL)
+    {
+        input_line[strcspn(input_line, "\n")] = '\0';
+        char *tokens[MAX_ARGS];
+        int token_count = 0;
+        char *token = strtok(input_line, " ");
+        while (token != NULL && token_count < MAX_ARGS)
+        {
+            tokens[token_count++] = token;
+            token = strtok(NULL, " ");
+        }
+        int arg_index = 0;
+        int token_index = 0;
+        for (i = 0; i < argc - 1; i++)
+        {
+            if (strcmp(args[arg_index], "%") == 0)
+            {
+                if (token_index < token_count)
+                {
+                    args[arg_index] = tokens[token_index];
+                    token_index++;
+                }
+                else
+                {
+                    args[arg_index] = NULL;
+                }
+            }
+            arg_index++;
+        }
+        args[arg_index] = NULL;
+
+        execute_command(args);
+
+        for (i = 0; i < argc - 1; i++)
+        {
+            if (strcmp(argv[i + 1], "%") == 0)
+            {
+                placeholder_count++;
+            }
+            args[i] = strdup(argv[i + 1]);
+        }
+        args[i] = NULL;
+    }
+
     return 0;
 }

@@ -4,7 +4,8 @@
 #include <sys/wait.h>
 #include <string.h>
 
-
+#define MAX_ARGS 8
+#define MAX_LINE_LENGTH 128
 
 void execute_command(char *command[]) {
     pid_t pid = fork();
@@ -24,39 +25,29 @@ void execute_command(char *command[]) {
 
 int main(int argc, char *argv[]) {
 
-    char **command = NULL;  // Initialize command array to NULL
-    char line[100];
+    char *command = NULL;  // Initialize command array to NULL
+    char line[MAX_LINE_LENGTH];
     int num_elements = 0;   // Number of elements currently in command array
-    int num_command = 0;
-    command = (char **)malloc((num_command + 1) * sizeof(char *));
-    
-    fgets(line, sizeof(line), stdin);
+    command = (int *)malloc((num_elements + 1) * sizeof(int *));
 
-    // Splitting the command based on spaces
-    char *token = strtok(line, " ");
-    while (token != NULL) {
-        // Allocate memory for the token and copy it
-        if (command[num_command] == NULL) {
-            command[num_command] = (char *)malloc(strlen(token) + 1);
-        }
-        strcpy(command[num_command], token);
-        command[num_command] = (char *)realloc(command[num_command],num_elements * strlen(token) + 1);
-        // command[num_command][num_elements] = strdup(token);
-        num_elements++;
-        token = strtok(NULL, " ");  // Get the next token
+    if (argc < 2) {
+        
+        exit(1);
     }
-    command[num_command][num_elements] = '\0';
 
-
-
-    // Free allocated memory
-    // for (int i = 0; command[i] != NULL; i++) {
-    //     free(command[i]);
-    // }
-    free(command[num_command]);
-    free(command);
+    while (fgets(line, sizeof(line), stdin) != NULL){
+        command[num_elements] = strdup(argv[1]);
+        char *token = strtok(line, " ");
+        while (token != NULL) {
+            num_elements++;
+            command = (int *)realloc(command, (num_elements + 1) * sizeof(int *));
+            command[num_elements] = strdup(token);
+            token = strtok(NULL, " ");  // Get the next token
+        }
+        command[num_elements] = NULL;
+        execute_command(*command);
+        num_elements = 0;
+    }
     
-
-
     return 0;
 }

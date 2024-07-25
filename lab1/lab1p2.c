@@ -1,27 +1,12 @@
-"# Secure-Application-Development-Labs" 
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <string.h>
 
-lab1p1 to run:
-first compile it ==> gcc lab1p1.c
-then run it ==> ./a.out <command> + <command> + <command> + ... + <command>
-ex:- ./a.out /bin/echo Linux is cool + /bin/echo But I am sleepy + /bin/echo Going to sleep now + /bin/sleep 5 + /bin/echo Now I am awake 
+#define MAX_ARGS 8
+#define MAX_LINE_LENGTH 128
 
-
-lab1p1 to run:
-first compile it ==> gcc lab1p2.c
-then run it ==> ./a.out <command> <flags> # number of sub command in %
-example :- ./a.out /bin/echo % % % %
-            echo Linux is cool
-            But I am sleepy
-
-
-approache for lab1p1:-
-there are three main things that the program should do
-1. get the user input
-2. structure it according to a format
-3. run each command in separate processess.
-
-challenges and solutions:
-1. executing commands in child process. using bellow function to run in chlid process.
 void execute_command(char *command[]) {
     pid_t pid = fork();
     if (pid == -1) {
@@ -38,13 +23,11 @@ void execute_command(char *command[]) {
     
 }
 
-approache for lab1p2:-
-there are two main things that the program should do
-1. get the arguments.
-2. structure it according to a format and parallelly run the command in a child process.
-
-challenges and solutions:
-1. determine the length of the command and adjust the *arg.
+int main(int argc, char *argv[]) {
+    char *args[MAX_ARGS + 1];
+    char input_line[MAX_LINE_LENGTH];
+    int placeholder_count = 0;
+    int i;   
 
     for (i = 0; i < argc - 1; i++)
     {
@@ -56,8 +39,29 @@ challenges and solutions:
     }
     args[i] = NULL;
 
-add the everything to args and then replace is accordinglly.
+    if(placeholder_count == 0)
+    {
+        fprintf(stderr, "Usage: %s <command>\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
 
+    if(placeholder_count>MAX_ARGS)
+    {
+        fprintf(stderr, "maximum number of input words is 8\n");
+        exit(EXIT_FAILURE);
+    }
+
+    while (fgets(input_line, sizeof(input_line), stdin) != NULL)
+    {
+        input_line[strcspn(input_line, "\n")] = '\0';
+        char *tokens[MAX_ARGS];
+        int token_count = 0;
+        char *token = strtok(input_line, " ");
+        while (token != NULL && token_count < MAX_ARGS)
+        {
+            tokens[token_count++] = token;
+            token = strtok(NULL, " ");
+        }
         int arg_index = 0;
         int token_index = 0;
         for (i = 0; i < argc - 1; i++)
@@ -78,10 +82,14 @@ add the everything to args and then replace is accordinglly.
         }
         args[arg_index] = NULL;
 
-2. clean the used args after a itteration.
+        execute_command(args);
 
         for (i = 0; i < argc - 1; i++)
         {
             args[i] = strdup(argv[i + 1]);
         }
         args[i] = NULL;
+    }
+
+    return 0;
+}

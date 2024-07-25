@@ -4,8 +4,6 @@
 #include <sys/wait.h>
 #include <string.h>
 
-#define MAX_ARGS 8
-
 void execute_command(char *command[]) {
     pid_t pid = fork();
     if (pid == -1) {
@@ -24,8 +22,9 @@ void execute_command(char *command[]) {
 
 int main(int argc, char *argv[]) {
 
-    char *command[MAX_ARGS+1];  // Initialize command array
+    char **command = NULL;  // Initialize command array to NULL
     int num_elements = 0;   // Number of elements currently in command array
+    command = (char **)malloc((num_elements + 1) * sizeof(char *));
     
     if (argc < 2) {
         fprintf(stderr, "Usage: %s command1 + command2 + ... + commandN\n", argv[0]);
@@ -34,26 +33,24 @@ int main(int argc, char *argv[]) {
     
     // /bin/echo Linux is cool + /bin/echo But I am sleepy
     for (int i = 1; i <= argc ; i++) {
-        if(num_elements > MAX_ARGS){
-            fprintf(stderr, "maximum args is 8");
-            exit(EXIT_FAILURE);
-        }
-
         if (argc == i || strcmp(argv[i], "+") == 0){
             command[num_elements] = NULL;
 
-            execute_command(command);
+             execute_command(command);
 
+            // Free dynamically allocated memory
+            for (int i = 0; command[i] != NULL; i++) {
+                free(command[i]);
+            }
+            free(command);
             // Reset for the next command sequence
             num_elements = 0; 
-
-            for (int i = 0; command[i] != NULL; i++) {
-                command[i] = NULL;
-            }
-
+            command = (char **)malloc((num_elements + 1) * sizeof(char *));
         }else{
             command[num_elements] = strdup(argv[i]);
             num_elements++;
+            // Resize command array
+            command = (char **)realloc(command, (num_elements + 1) * sizeof(char *));
         }
     }
 
